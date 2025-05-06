@@ -6,11 +6,15 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 import unittest
 from fastapi.testclient import TestClient
-from app.main import app
+# from app.main import app # Remove direct import
 
 class TestWebSocket(unittest.TestCase):
     def setUp(self):
-        self.client = TestClient(app)
+        # Load environment variables for the test class
+        import app.config.env_config
+        # Import the app instance after loading env
+        from app.main import app
+        self.client = TestClient(app) # Initialize with the app instance
 
     def test_websocket_enhance_prompt_success(self):
         with self.client.websocket_connect("/ws/enhance-prompt") as websocket:

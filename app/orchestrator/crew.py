@@ -1,44 +1,5 @@
 import os
 import yaml
-import logging # Import logging
-import json # Import the json module
-import asyncio # Import asyncio
-from crewai import Agent, Task, Crew, Process
-from crewai.project import CrewBase, agent, task, crew
-from typing import Dict, Any, List
-from pathlib import Path
-from pydantic import ValidationError # Import ValidationError
-from app.services.lmstudio import LMStudioService, LMStudioLiteLLMWrapper # Import LMStudioService and the new wrapper
-
-# Assuming these custom agent wrapper classes exist and work correctly
-# They should contain the logic for interacting with services and returning results
-from app.agents.topic_analysis import TopicAnalysisAgent
-from app.agents.category_breakdown import CategoryBreakdownAgent
-from app.agents.iterative_refinement import IterativeRefinementAgent
-from app.agents.research_integration import ResearchIntegrationAgent, ResearchIntegrationInputData, ResearchIntegrationToolInput # Import necessary classes for manual input construction
-
-# Assuming your LMStudio service exists and works correctly
-# from app.services.lmstudio import LMStudioService # Already imported above
-
-# Assuming your PromptRequest model exists
-from app.models.prompt import PromptRequest
-
-# Define the path to the configuration directory
-# This path should now be relative to the crew.py file itself
-# and point to the config directory *within* app/orchestrator/
-# Updated CONFIG_DIR to be relative to the current file's directory
-CONFIG_DIR = Path(__file__).parent / "config"
-print(f"CONFIG_DIR: {CONFIG_DIR}") # Print the actual path being used
-
-# Configure logger for this module
-logger = logging.getLogger(__name__)
-# You might want to set a specific level for this logger if needed,
-# or rely on the basicConfig level set in run.py or main.py
-# logger.setLevel(logging.INFO)
-
-
-import os
-import yaml
 import logging
 import json
 from crewai import Agent, Task, Crew, Process
@@ -70,6 +31,7 @@ class PromptEnhancerCrew:
     def __init__(self):
         # Initialize service and LLM instances
         self.lmstudio_service = LMStudioService()
+        # Initialize LiteLLM wrapper
         self.litellm_llm = LMStudioLiteLLMWrapper(self.lmstudio_service)
 
         # Initialize custom agent wrappers
