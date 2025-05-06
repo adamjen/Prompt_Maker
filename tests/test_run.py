@@ -14,6 +14,10 @@ import requests # Import requests to reference exceptions
 from app.run import check_lmstudio_running, main
 
 class TestRun(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Load environment variables for the test class
+        import app.config.env_config
     # Patching targets remain the same now that imports are at the top of app.run
     @patch('app.run.requests.get')
     def test_check_lmstudio_running_success(self, mock_get):
@@ -27,7 +31,7 @@ class TestRun(unittest.TestCase):
         self.assertTrue(check_lmstudio_running())
 
         # Verify requests.get was called
-        mock_get.assert_called_once_with("http://localhost:1234/api/v0/models")
+        mock_get.assert_called_once_with("http://localhost:1234/v1/models")
 
     @patch('app.run.requests.get')
     def test_check_lmstudio_running_failure(self, mock_get):
@@ -39,7 +43,7 @@ class TestRun(unittest.TestCase):
         self.assertFalse(check_lmstudio_running())
 
         # Verify requests.get was called
-        mock_get.assert_called_once_with("http://localhost:1234/api/v0/models")
+        mock_get.assert_called_once_with("http://localhost:1234/v1/models")
 
     # Patch subprocess.Popen, check_lmstudio_running, AND uvicorn.run
     @patch('app.run.uvicorn.run') # <-- Patch uvicorn.run

@@ -9,6 +9,10 @@ from fastapi.testclient import TestClient
 from app.main import app
 
 class TestMain(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        # Load environment variables for the test class
+        import app.config.env_config
     def setUp(self):
         self.client = TestClient(app)
 

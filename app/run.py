@@ -7,6 +7,8 @@ import requests
 import subprocess
 import sys # Import sys
 
+# Load environment variables early
+import app.config.env_config
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -22,7 +24,7 @@ logger = logging.getLogger("prompt_enhancer")
 def check_lmstudio_running():
     """Check if LMStudio is running and accessible"""
     try:
-        response = requests.get("http://localhost:1234/api/v0/models")
+        response = requests.get("http://localhost:1234/v1/models")
         if response.status_code == 200:
             logger.info("LMStudio is running")
             return True
