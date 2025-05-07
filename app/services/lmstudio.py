@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class LMStudioService:
     """Service for interacting with LMStudio local LLM using LiteLLM"""
 
-    def __init__(self, model_name: str = "qwen3-8b", api_base: str = "http://localhost:1234"):
+    def __init__(self, model_name: str = os.getenv("LMSTUDIO_MODEL_NAME", "qwen3-1.7b"), api_base: str = os.getenv("LMSTUDIO_API_BASE_URL", "http://localhost:1234")):
         self.api_base = api_base
         self.model_name = model_name
         # LiteLLM often requires an API key even for local endpoints.
