@@ -6,8 +6,7 @@ from crewai.tools import BaseTool # Import BaseTool
 from app.models.prompt import PromptRequest # Assuming PromptRequest might be needed for type hinting
 from app.models.response import ResearchIntegrationResult # Import necessary result models
 from app.services.lmstudio import LMStudioService # Import LMStudioService
-# Assuming you have a ResearchTool service/class
-# from app.services.research import ResearchService # Example import - Uncomment if you have this service
+from app.services.research import ResearchService # Import ResearchService
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 import json # Import json
@@ -31,106 +30,65 @@ class ResearchIntegrationToolInput(BaseModel):
     tool_input: ResearchIntegrationInputData = Field(description="Container for the tool's input data.")
 
 
-# Define the custom tool by subclassing BaseTool
-class ResearchIntegrationTool(BaseTool):
-    """Tool for integrating research findings and context into a refined prompt using LMStudio."""
-
-    name: str = "Research Integration Tool"
-    description: str = (
-        "Integrates relevant research findings and additional context into a refined prompt. "
-        "Returns the final enhanced prompt as a string."
-        "Input should be a JSON object with a single key 'tool_input', whose value is a JSON object "
-        "with 'refined_prompt', 'original_prompt', and 'additional_context' keys."
-        "Example input JSON: {'tool_input': {'refined_prompt': 'Refined Prompt Here', 'original_prompt': 'Original Prompt Here', 'additional_context': '{...Context JSON...}'}"
-    )
-    # Define the input model for the tool, using the nested structure
-    args_schema: type = ResearchIntegrationToolInput
-
-    # Add service and llm as attributes that will be passed during instantiation
-    lmstudio_service: LMStudioService
-    llm: Any # Or a more specific type if available
-    # research_service: Optional[Any] = None # Add research service if you have one
+    def __init__(self, lmstudio_service: LMStudioService, llm: Any, research_service: ResearchService):
+        self.lmstudio_service = lmstudio_service
+        self.llm = llm
+        self.research_service = research_service
+        super().__init__()
 
     # The _run method now receives the validated ResearchIntegrationToolInput instance
-    def _run(self, tool_input: ResearchIntegrationToolInput) -> str:
+    def _run(self, tool_input: 'ResearchIntegrationToolInput') -> str:
         """
-        Runs the research integration logic by prompting LMStudio.
+        Runs the research integration logic.
         This method is called by the CrewAI agent when the tool is used.
         Receives input as a ResearchIntegrationToolInput instance with nested data.
         """
         logger.info(f"Executing Research Integration Tool...")
-        # Access the actual input data from the nested 'tool_input' field
         input_data = tool_input.tool_input
-        logger.info(f"  Refined Prompt: {input_data.refined_prompt[:100]}...")
-        logger.info(f"  Original Prompt: {input_data.original_prompt[:100]}...")
-        logger.info(f"  Additional Context: {input_data.additional_context[:100]}...")
+        enhanced_prompt = self.research_service.integrate_research(
+            input_data.refined_prompt,
+            input_data.original_prompt,
+            input_data.additional_context
+        )
+        return enhanced_prompt
 
-        # The input is now validated and available via the input_data object
-        refined_prompt = input_data.refined_prompt
-        original_prompt = input_data.original_prompt
-        additional_context = input_data.additional_context
+class ResearchIntegrationTool(BaseTool):
+    """Tool for integrating research findings into the prompt refinement process"""
+    
+    name: str = Field(default="Research Integration Tool", description="Name of the tool")
+    description: str = Field(default="Integrates research findings into the prompt refinement", description="Description of the tool")
+    lmstudio_service: LMStudioService = Field(..., description="LMStudio service instance")
+    llm: Any = Field(..., description="LLM instance")
+    research_service: ResearchService = Field(..., description="Research service instance")
 
-        # --- Research Step (Placeholder) ---
-        # Initialize research_results to an empty string or default value
-        research_results = "[No research service available]"
-        # If you have a research service, uncomment and use it here.
-        # research_query = f"Find relevant information for: {original_prompt}" # Or refined_prompt
-        # research_results = ""
-        # if self.research_service:
-        #     try:
-        #         research_results = self.research_service.perform_search(research_query)
-        #         logger.info(f"Research results obtained (first 50 chars): {research_results[:50]}...")
-        #     except Exception as e:
-        #         logger.error(f"Error during research service call: {e}")
-        #         research_results = f"Error obtaining research results: {e}"
-        # else:
-        #      logger.warning("Research service not provided to ResearchIntegrationTool.")
+    def __init__(self, lmstudio_service: LMStudioService, llm: Any, research_service: ResearchService):
+        super().__init__(lmstudio_service=lmstudio_service, llm=llm, research_service=research_service)
 
-        # Combine all information for the final LMStudio prompt
-        integration_prompt = f"""
-Integrate the following research findings and additional context into the refined prompt.
-The goal is to create the final, most comprehensive and useful version of the prompt.
-
-Refined Prompt: {refined_prompt}
-
-Original Prompt: {original_prompt}
-
-Additional Context: {additional_context if additional_context else "No additional context provided."}
-
-Research Findings: {research_results} # Use the initialized variable
-
-Provide the final, enhanced prompt as your output. Do not include any other text or formatting.
-"""
-
-        try:
-            # Use the LMStudio service instance passed to the tool
-            final_enhanced_prompt = self.lmstudio_service.generate_completion(integration_prompt)
-            logger.info(f"Received final enhanced prompt from LMStudio (first 50 chars): {final_enhanced_prompt[:50]}...")
-
-            # Return the final enhanced prompt string
-            return final_enhanced_prompt.strip() # Return the cleaned response string
-
-        except Exception as e:
-            logger.error(f"Error calling LMStudio service from Research Integration tool: {e}")
-            # Return an error message
-            return f"Error during final integration: {e}" # Return error as a string
-
+    def _run(self, tool_input: ResearchIntegrationToolInput) -> str:
+        # Implementation of the _run method
+        logger.info(f"Executing Research Integration Tool...")
+        input_data = tool_input.tool_input
+        enhanced_prompt = self.research_service.integrate_research(
+            input_data.refined_prompt,
+            input_data.original_prompt,
+            input_data.additional_context
+        )
+        return enhanced_prompt
 
 class ResearchIntegrationAgent:
     """Agent responsible for integrating research findings into the prompt refinement"""
 
-    # Corrected __init__ to accept necessary services
-    def __init__(self, config: Dict[str, Any], lmstudio_service: LMStudioService, llm: Any): # , research_service: Optional[ResearchService] = None): # Example
+    def __init__(self, config: Dict[str, Any], lmstudio_service: LMStudioService, llm: Any, research_service: ResearchService):
         self.config = config
-        self.lmstudio_service = lmstudio_service # Store the service instance
-        self.llm = llm # Store llm
-        # self.research_service = research_service # Store research service if needed
+        self.lmstudio_service = lmstudio_service
+        self.llm = llm
+        self.research_service = research_service
 
         # Instantiate the custom tool, passing necessary dependencies
         self.research_integration_tool = ResearchIntegrationTool(
             lmstudio_service=self.lmstudio_service,
-            llm=self.llm, # Pass the llm to the tool if needed within _run
-            # research_service=self.research_service # Pass research service if you have one
+            llm=self.llm,
+            research_service=self.research_service
         )
 
         # Initialize the CrewAI Agent here using the config
@@ -142,8 +100,8 @@ class ResearchIntegrationAgent:
             allow_delegation=config.get("allow_delegation", False),
             max_iter=config.get("max_iter", 15),
             max_rpm=config.get("max_rpm", 100),
-            llm=self.llm, # Pass the llm instance to the CrewAI Agent
-            tools=[self.research_integration_tool] # Assign the instantiated tool to the agent
+            llm=self.llm,
+            tools=[self.research_integration_tool]
         )
         self.last_result: Optional[ResearchIntegrationResult] = None
 

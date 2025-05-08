@@ -65,8 +65,8 @@ def main():
             # It doesn't wait for the server to be fully ready.
             # You might need a short delay or a loop to check if it's ready.
         except FileNotFoundError:
-             logger.error("Error: 'lms' command not found. Please ensure LMStudio is installed and in your system's PATH.")
-             return
+            logger.error("Error: 'lms' command not found. Please ensure LMStudio is installed and in your system's PATH.")
+            return
         except Exception as e:
             logger.error(f"Failed to start LMStudio automatically: {e}")
             return
@@ -78,7 +78,8 @@ def main():
         "app.main:app",
         host=args.host,
         port=args.port,
-        reload=args.debug
+        reload=args.debug,
+        loop="asyncio"
     )
 
 if __name__ == "__main__":

@@ -47,3 +47,5 @@ research_integration:
   allow_delegation: false
   max_iter: 15
   max_rpm: 100
+  tools:
+    - research_integration_tool

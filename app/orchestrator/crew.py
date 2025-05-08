@@ -3,18 +3,19 @@ import yaml
 import logging
 import json
 from crewai import Agent, Task, Crew, Process
-from crewai.project import CrewBase, agent, task, crew
+from crewai.project import CrewBase, agent, task, crew, tool # Import tool
 from crewai.flow import Flow, start, listen # Import Flow, start, and listen
 from typing import Dict, Any, List
 from pathlib import Path
 from pydantic import ValidationError
 
 from app.services.lmstudio import LMStudioService, LMStudioLiteLLMWrapper
+from app.services.research import ResearchService
 
 from app.agents.topic_analysis import TopicAnalysisAgent
 from app.agents.category_breakdown import CategoryBreakdownAgent
 from app.agents.iterative_refinement import IterativeRefinementAgent
-from app.agents.research_integration import ResearchIntegrationAgent, ResearchIntegrationInputData, ResearchIntegrationToolInput
+from app.agents.research_integration import ResearchIntegrationAgent, ResearchIntegrationInputData, ResearchIntegrationToolInput, ResearchIntegrationTool # Import ResearchIntegrationTool
 
 from app.models.prompt import PromptRequest
 
@@ -31,6 +32,7 @@ class PromptEnhancerCrew:
     def __init__(self):
         # Initialize service and LLM instances
         self.lmstudio_service = LMStudioService()
+        self.research_service = ResearchService()
         # Initialize LiteLLM wrapper
         self.litellm_llm = LMStudioLiteLLMWrapper(self.lmstudio_service)
 
@@ -39,7 +41,7 @@ class PromptEnhancerCrew:
         self.topic_analysis_wrapper = TopicAnalysisAgent(agents_config.get("topic_analysis", {}), self.lmstudio_service, self.litellm_llm)
         self.category_breakdown_wrapper = CategoryBreakdownAgent(agents_config.get("category_breakdown", {}), self.lmstudio_service, self.litellm_llm)
         self.iterative_refinement_wrapper = IterativeRefinementAgent(agents_config.get("iterative_refinement", {}), self.lmstudio_service, self.litellm_llm)
-        self.research_integration_wrapper = ResearchIntegrationAgent(agents_config.get("research_integration", {}), self.lmstudio_service, self.litellm_llm)
+        self.research_integration_wrapper = ResearchIntegrationAgent(agents_config.get("research_integration", {}), self.lmstudio_service, self.litellm_llm, self.research_service)
 
     def _load_config(self, config_name: str) -> Dict[str, Any]:
         """Helper to load a specific configuration file"""
@@ -120,6 +122,15 @@ class PromptEnhancerCrew:
             expected_output=task_config.get("expected_output", "The refined prompt with relevant research findings integrated."),
             agent=self.research_integration_agent(),
             tools=[self.research_integration_wrapper.research_integration_tool], # Add tool if exists
+        )
+    @tool
+    def research_integration_tool(self) -> ResearchIntegrationTool:
+        """Returns the CrewAI Research Integration Tool instance."""
+        # Assuming ResearchIntegrationTool needs lmstudio_service, llm, and research_service
+        return ResearchIntegrationTool(
+            lmstudio_service=self.lmstudio_service,
+            llm=self.litellm_llm, # Use litellm_llm here
+            research_service=self.research_service
         )
 
     @crew
