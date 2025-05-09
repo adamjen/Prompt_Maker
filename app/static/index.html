@@ -1,28 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI-Driven Prompt Enhancer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* CSS Variables for consistent styling */
         :root {
             --primary-color: #4361ee;
+            --primary-dark: #3a56d4;
             --secondary-color: #4895ef;
             --accent-color: #f72585;
-            --success-color: #06d6a0;
-            --error-color: #ef476f;
-            --bg-gradient: linear-gradient(135deg, #e0c3fc, #8ec5fc);
-            --primary-dark: #3a56d4;
             --light-bg: #f8f9fa;
-            --dark-text: #2b2b2b;
+            --dark-text: #333;
             --light-text: #666;
             --border-radius: 12px;
             --box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
             --transition: all 0.3s ease;
         }
 
+        /* Basic reset and font application */
         * {
             margin: 0;
             padding: 0;
@@ -30,25 +29,22 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', sans-serif; /* Use Inter font */
             line-height: 1.6;
             color: var(--dark-text);
             background-color: #f5f7fa;
             padding: 20px;
-            min-height: 100vh;
+            min-height: 100vh; /* Ensure body takes at least full viewport height */
             display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            justify-content: center; /* Center content horizontally */
+            align-items: flex-start; /* Align content to the top */
         }
 
         .container {
             max-width: 1200px;
-            width: 100%;
+            width: 100%; /* Make container take full width up to max-width */
             margin: 0 auto;
             padding: 30px;
-            background: var(--bg-gradient);
-            border-radius: 20px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
         }
 
         .app-header {
@@ -72,30 +68,29 @@
         .main-content {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            padding: 30px 0;
+            gap: 30px;
         }
 
+        /* Responsive adjustments for smaller screens */
         @media (max-width: 768px) {
             .main-content {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr; /* Stack columns on smaller screens */
             }
         }
 
         .card {
-            background: white;
+            background-color: white;
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
             padding: 25px;
             transition: var(--transition);
-            display: flex;
+            display: flex; /* Use flexbox for card content */
             flex-direction: column;
-            border: 1px solid #eee;
         }
 
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
         }
 
         .card h2 {
@@ -115,13 +110,12 @@
             min-height: 200px;
             padding: 15px;
             border: 1px solid #ddd;
-            border-radius: var(--border-radius);
+            border-radius: var(--border-radius); /* Apply border-radius */
             font-family: inherit;
-            resize: vertical;
+            resize: vertical; /* Allow vertical resizing */
             transition: var(--transition);
             margin-bottom: 20px;
-            flex-grow: 1;
-            font-size: 16px;
+            flex-grow: 1; /* Allow textarea to grow and fill space */
         }
 
         textarea:focus {
@@ -133,22 +127,25 @@
         .btn {
             display: inline-block;
             padding: 12px 24px;
-            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            border-radius: var(--border-radius);
+            border-radius: var(--border-radius); /* Apply border-radius */
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: var(--transition);
             text-align: center;
-            align-self: flex-start;
-            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+            align-self: flex-start; /* Align button to the start */
         }
 
         .btn:hover {
+            background-color: var(--primary-dark);
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
         }
 
         .status-container {
@@ -159,16 +156,16 @@
         }
 
         .status-item {
-            background: #f9f9f9;
-            border-left: 5px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            background-color: var(--light-bg);
             padding: 12px 15px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
+            border-radius: 8px; /* Rounded corners for status items */
+            transition: var(--transition);
         }
 
         .status-item:hover {
-            background: #fafafa;
-            transform: translateX(5px);
+            background-color: #e9ecef;
         }
 
         .status-icon {
@@ -179,23 +176,23 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
+            border-radius: 50%; /* Circular icon background */
             background-color: #e0e0e0;
             color: var(--light-text);
         }
 
         .status-icon.active {
-            background-color: #ffd166;
+            background-color: #ffd166; /* Yellow for active */
             color: #333;
         }
 
         .status-icon.completed {
-            background-color: var(--success-color);
+            background-color: #06d6a0; /* Green for completed */
             color: white;
         }
 
         .status-icon.error {
-            background-color: var(--error-color);
+            background-color: #ef476f; /* Red for error */
             color: white;
         }
 
@@ -205,51 +202,42 @@
 
         .output-container {
             background-color: var(--light-bg);
-            border-radius: var(--border-radius);
+            border-radius: var(--border-radius); /* Apply border-radius */
             padding: 20px;
             min-height: 200px;
-            max-height: 500px;
-            overflow-y: auto;
-            word-break: break-word;
-            font-size: 14px;
+            max-height: 500px; /* Set a max height for output */
+            overflow-y: auto; /* Add scroll if content exceeds max height */
+            word-break: break-word; /* Break long words */
         }
 
         #enhanced-prompt-output {
-            white-space: pre-wrap;
-            font-family: 'Courier New', Courier, monospace;
+            white-space: pre-wrap; /* Preserve whitespace and wrap text */
+            font-family: 'Courier New', Courier, monospace; /* Monospace font for code/output */
             color: var(--dark-text);
         }
 
+        /* Notification styling */
         .notification {
             position: fixed;
             bottom: 20px;
             right: 20px;
             padding: 15px 25px;
-            background-color: #4caf50;
+            background-color: #4caf50; /* Default success color */
             color: white;
             border-radius: var(--border-radius);
             box-shadow: var(--box-shadow);
-            opacity: 0;
-            transform: translateY(20px);
+            opacity: 0; /* Start hidden */
+            transform: translateY(20px); /* Start slightly below final position */
             transition: all 0.3s ease;
-            z-index: 1000;
+            z-index: 1000; /* Ensure it's above other content */
         }
 
         .notification.show {
-            opacity: 1;
-            transform: translateY(0);
+            opacity: 1; /* Fade in */
+            transform: translateY(0); /* Slide up to final position */
         }
 
-        @keyframes float {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-            100% { transform: translateY(0); }
-        }
-
-        .notification {
-            animation: float 3s ease-in-out infinite;
-        }
-
+        /* Tab styling */
         .tabs {
             display: flex;
             margin-bottom: 20px;
@@ -271,12 +259,52 @@
         }
 
         .tab-content {
-            display: none;
+            display: none; /* Hide inactive tab content */
         }
 
         .tab-content.active {
-            display: block;
+            display: block; /* Show active tab content */
         }
+
+        /* Connection status styling - Removed as per user request */
+        /*
+        .connection-status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            background-color: var(--light-bg);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .connection-status i {
+            margin-right: 10px;
+        }
+
+        .connection-status.connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .connection-status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+         .connection-status.connecting {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .connection-status .btn {
+            margin-left: 15px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+        */
+
     </style>
 </head>
 <body>
@@ -330,12 +358,13 @@
                 </div>
             </div>
         </main>
-    </div>
+         </div>
 
     <div class="notification" id="notification"></div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Get elements
             const tabs = document.querySelectorAll('.tab');
             const tabContents = document.querySelectorAll('.tab-content');
             const statusIcons = document.querySelectorAll('.status-icon');
@@ -344,85 +373,137 @@
             const promptTextAdvancedInput = document.getElementById('prompt-text-advanced');
             const enhancedPromptOutput = document.getElementById('enhanced-prompt-output');
             const notification = document.getElementById('notification');
+            // Removed connection status elements
+            // const connectionStatusDiv = document.getElementById('connection-status');
+            // const connectionStatusText = document.getElementById('connection-text');
+            // const checkConnectionBtn = document.getElementById('check-connection-btn');
 
-            // Backend endpoint
+            // --- Backend Endpoint ---
+            // This URL matches the endpoint defined in your app.main.py
             const backendEndpoint = 'http://localhost:8000/api/enhance-prompt';
 
+            // --- Tab functionality ---
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     const tabId = tab.getAttribute('data-tab');
 
+                    // Remove active class from all tabs and contents
                     tabs.forEach(t => t.classList.remove('active'));
                     tabContents.forEach(c => c.classList.remove('active'));
 
+                    // Add active class to clicked tab and corresponding content
                     tab.classList.add('active');
                     document.getElementById(tabId + '-tab').classList.add('active');
                 });
             });
 
+            // --- Status update function for Processing Steps ---
             function updateProcessingStatus(status, id) {
                 const icon = document.querySelector(`.status-icon[data-status-for="${id}"]`);
-                const textElement = icon ? icon.nextElementSibling : null;
+                const textElement = icon ? icon.nextElementSibling : null; // Get the text element next to the icon
 
-                if (!icon) return;
+                if (!icon) return; // Prevent errors if icon not found
 
+                // Reset classes and content
                 icon.className = 'status-icon';
-                icon.innerHTML = '';
+                icon.innerHTML = ''; // Clear previous icon/text
 
                 if (status === 'processing') {
                     icon.classList.add('active');
-                    icon.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                    if (textElement) textElement.textContent = getProcessingStatusText(id, 'processing');
+                    icon.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; // Spinner icon
+                     if (textElement) textElement.textContent = getProcessingStatusText(id, 'processing');
                 } else if (status === 'completed') {
                     icon.classList.add('completed');
-                    icon.innerHTML = '<i class="fas fa-check"></i>';
-                    if (textElement) textElement.textContent = getProcessingStatusText(id, 'completed');
+                    icon.innerHTML = '<i class="fas fa-check"></i>'; // Checkmark icon
+                     if (textElement) textElement.textContent = getProcessingStatusText(id, 'completed');
                 } else if (status === 'error') {
                     icon.classList.add('error');
-                    icon.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
-                    if (textElement) textElement.textContent = getProcessingStatusText(id, 'error');
-                } else {
-                    icon.innerHTML = '⏳';
-                    if (textElement) textElement.textContent = getProcessingStatusText(id, 'initial');
+                    icon.innerHTML = '<i class="fas fa-exclamation-circle"></i>'; // Error icon
+                     if (textElement) textElement.textContent = getProcessingStatusText(id, 'error');
+                } else { // Default/Initial state
+                     icon.innerHTML = '⏳'; // Initial state icon
+                     if (textElement) textElement.textContent = getProcessingStatusText(id, 'initial');
                 }
             }
 
+            // Helper function to get processing status text based on id and state
             function getProcessingStatusText(id, status) {
                 switch (id) {
                     case 'send_prompt':
-                        return status === 'initial' ? 'Sending Prompt to Backend' : 
-                               status === 'processing' ? 'Sending Prompt...' :
-                               status === 'completed' ? 'Prompt Sent' :
-                               'Sending Failed';
+                        return status === 'initial' ? 'Sending Prompt to Backend' : (status === 'processing' ? 'Sending Prompt...' : (status === 'completed' ? 'Prompt Sent' : 'Sending Failed'));
                     case 'backend_processing':
-                        return status === 'initial' ? 'Backend Processing (CrewAI)' : 
-                               status === 'processing' ? 'Processing (CrewAI)...' :
-                               status === 'completed' ? 'Processing Complete' :
-                               'Processing Error';
+                        return status === 'initial' ? 'Backend Processing (CrewAI)' : (status === 'processing' ? 'Processing (CrewAI)...' : (status === 'completed' ? 'Processing Complete' : 'Processing Error'));
                     case 'receive_response':
-                        return status === 'initial' ? 'Receiving Enhanced Prompt' : 
-                               status === 'processing' ? 'Receiving Response...' :
-                               status === 'completed' ? 'Response Received' :
-                               'Receiving Error';
+                        return status === 'initial' ? 'Receiving Enhanced Prompt' : (status === 'processing' ? 'Receiving Response...' : (status === 'completed' ? 'Response Received' : 'Receiving Error'));
                     default:
                         return 'Unknown Status';
                 }
             }
 
+             // --- Removed Connection Status Update Function ---
+            /*
+            function updateConnectionStatus(status) {
+                connectionStatusDiv.className = 'connection-status'; // Reset classes
+                let iconHtml = '';
+                let text = '';
+
+                if (status === 'connected') {
+                    connectionStatusDiv.classList.add('connected');
+                    iconHtml = '<i class="fas fa-check-circle"></i>';
+                    text = 'Connected to backend. Ready to enhance prompts!';
+                    checkConnectionBtn.disabled = false; // Enable button
+                    checkConnectionBtn.textContent = 'Check Connection'; // Reset button text
+                } else if (status === 'disconnected') {
+                    connectionStatusDiv.classList.add('disconnected');
+                    iconHtml = '<i class="fas fa-times-circle"></i>';
+                    text = 'Disconnected from backend. Enhancement unavailable.';
+                     checkConnectionBtn.disabled = false; // Enable button
+                     checkConnectionBtn.textContent = 'Check Connection'; // Reset button text
+                } else if (status === 'connecting') {
+                     connectionStatusDiv.classList.add('connecting');
+                     iconHtml = '<i class="fas fa-circle-notch fa-spin"></i>';
+                     text = 'Attempting to connect to backend...';
+                     checkConnectionBtn.disabled = true; // Disable button while connecting
+                     checkConnectionBtn.textContent = 'Checking...'; // Update button text
+                } else if (status === 'error') {
+                     connectionStatusDiv.classList.add('disconnected'); // Use disconnected style for error
+                     iconHtml = '<i class="fas fa-exclamation-triangle"></i>';
+                     text = 'Connection error. Enhancement unavailable.';
+                     checkConnectionBtn.disabled = false; // Enable button
+                     checkConnectionBtn.textContent = 'Check Connection'; // Reset button text
+                }
+
+                connectionStatusDiv.innerHTML = iconHtml + `<span id="connection-text">${text}</span>` + checkConnectionBtn.outerHTML; // Update innerHTML while preserving button
+                 // Re-attach event listener to the button as innerHTML overwrites it
+                 document.getElementById('check-connection-btn').addEventListener('click', checkBackendConnection);
+            }
+            */
+
+
+             // --- Notification function ---
             function showNotification(message, type = 'success') {
                 notification.textContent = message;
+
+                // Set background color based on type
                 if (type === 'error') {
-                    notification.style.backgroundColor = '#ef476f';
+                    notification.style.backgroundColor = '#ef476f'; // Red
                 } else {
-                    notification.style.backgroundColor = '#4caf50';
+                    notification.style.backgroundColor = '#4caf50'; // Green
                 }
+
+                // Show notification with transition
                 notification.classList.add('show');
+
+                // Hide notification after 3 seconds
                 setTimeout(() => {
                     notification.classList.remove('show');
                 }, 3000);
             }
 
-            enhanceBtn.addEventListener('click', async function() {
+            // --- Enhance button functionality ---
+            enhanceBtn.addEventListener('click', async function() { // Added async keyword for fetch
+
+                // Determine which textarea is active and get its value
                 const activeTabContent = document.querySelector('.tab-content.active');
                 let prompt = '';
                 if (activeTabContent.id === 'basic-tab') {
@@ -436,51 +517,101 @@
                     return;
                 }
 
+                // Reset all processing status indicators and output
                 statusIcons.forEach(icon => updateProcessingStatus('initial', icon.getAttribute('data-status-for')));
-                enhancedPromptOutput.textContent = 'Processing...';
-                enhanceBtn.disabled = true;
+                enhancedPromptOutput.textContent = 'Processing...'; // Clear previous output and show processing message
+                enhanceBtn.disabled = true; // Disable button during processing
+
 
                 try {
-                    updateProcessingStatus('processing', 'send_prompt');
+                    // --- Step 1: Send Prompt to Backend ---
+                    updateProcessingStatus('processing', 'send_prompt'); // Indicate sending
 
                     const response = await fetch(backendEndpoint, {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
                         body: JSON.stringify({ prompt: prompt })
                     });
 
                     if (!response.ok) {
+                        // Handle HTTP errors (e.g., 404, 500)
                         const errorText = await response.text();
                         throw new Error(`Backend error: ${response.status} ${response.statusText} - ${errorText}`);
                     }
 
-                    updateProcessingStatus('completed', 'send_prompt');
-                    updateProcessingStatus('processing', 'backend_processing');
+                    updateProcessingStatus('completed', 'send_prompt'); // Indicate prompt sent
+                    updateProcessingStatus('processing', 'backend_processing'); // Indicate backend processing (CrewAI)
 
-                    const result = await response.json();
+                    // --- Step 2: Receive and Process Response ---
+                    // Assuming the backend returns JSON with an 'enhanced_prompt' field
+                    const result = await response.json(); // Or response.text() if backend returns plain text
 
-                    updateProcessingStatus('completed', 'backend_processing');
-                    updateProcessingStatus('processing', 'receive_response');
+                    updateProcessingStatus('completed', 'backend_processing'); // Indicate backend processing complete
+                    updateProcessingStatus('processing', 'receive_response'); // Indicate receiving response
 
-                    if (result && result.enhanced_prompt) {
-                        enhancedPromptOutput.textContent = result.enhanced_prompt;
-                        updateProcessingStatus('completed', 'receive_response');
-                        showNotification('Prompt enhanced successfully!');
+                    // --- Step 3: Display Enhanced Prompt ---
+                    if (result && result.enhanced_prompt) { // Adjust based on your backend's JSON structure
+                         enhancedPromptOutput.textContent = result.enhanced_prompt;
+                         updateProcessingStatus('completed', 'receive_response'); // Indicate response received
+                         showNotification('Prompt enhanced successfully!');
                     } else {
-                        throw new Error('Unexpected response format from backend.');
+                         // Handle unexpected response structure
+                         throw new Error('Unexpected response format from backend.');
                     }
+
 
                 } catch (error) {
                     console.error('Error enhancing prompt:', error);
                     enhancedPromptOutput.textContent = `Error: ${error.message}`;
+                    // Set all processing status icons to error state on failure
                     statusIcons.forEach(icon => updateProcessingStatus('error', icon.getAttribute('data-status-for')));
                     showNotification('Error enhancing prompt!', 'error');
+
                 } finally {
-                    enhanceBtn.disabled = false;
+                    enhanceBtn.disabled = false; // Re-enable button
                 }
             });
 
-            statusIcons.forEach(icon => updateProcessingStatus('initial', icon.getAttribute('data-status-for')));
+            // --- Removed Manual check for backend connection function ---
+            /*
+            async function checkBackendConnection() {
+                 updateConnectionStatus('connecting');
+                 try {
+                     // Make a simple request to check if the backend is reachable
+                     // Using the actual enhance endpoint with a minimal valid payload
+                     const response = await fetch(backendEndpoint, {
+                         method: 'POST',
+                         headers: {'Content-Type': 'application/json'},
+                         body: JSON.stringify({ prompt: 'connection check' }) // Send a minimal valid prompt
+                     });
+
+                     // Check for success (200 OK) or validation error (422) which indicates the endpoint exists
+                     if (response.ok || response.status === 422) {
+                         updateConnectionStatus('connected');
+                     } else {
+                         updateConnectionStatus('disconnected');
+                     }
+                 } catch (error) {
+                     console.error('Backend connection check failed:', error);
+                     updateConnectionStatus('disconnected');
+                 }
+            }
+            */
+
+             // Initialize processing status icons on page load
+             statusIcons.forEach(icon => updateProcessingStatus('initial', icon.getAttribute('data-status-for')));
+
+             // Removed initial connection status setting and button listener
+             // Set initial connection status text on page load
+             // updateConnectionStatus('disconnected'); // Start with disconnected status
+             // Add event listener to the new check connection button
+             // checkConnectionBtn.addEventListener('click', checkBackendConnection);
+
+             // Optional: Periodically check connection status - disabled by default
+             // setInterval(checkBackendConnection, 30000); // Check every 30 seconds
+
         });
     </script>
 </body>

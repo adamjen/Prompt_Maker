@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class LMStudioService:
     """Service for interacting with LMStudio local LLM using LiteLLM"""
 
-    def __init__(self, model_name: str = os.getenv("LMSTUDIO_MODEL_NAME", "qwen3-1.7b"), api_base: str = os.getenv("LMSTUDIO_API_BASE_URL", "http://localhost:1234/v1")):
+    def __init__(self, model_name: str = "qwen3-8b", api_base: str = "http://localhost:1234"):
         self.api_base = api_base
         self.model_name = model_name
         # LiteLLM often requires an API key even for local endpoints.
@@ -24,9 +24,9 @@ class LMStudioService:
         self.api_key = "sk-test" # Use a dummy API key
 
         # Set the global LiteLLM API base to ensure requests go to LMStudio
-#        import litellm
-#        litellm.api_base = self.api_base
-#        litellm.api_key = self.api_key # Also set global API key
+        import litellm
+        litellm.api_base = f"{self.api_base}/v1"
+        litellm.api_key = self.api_key # Also set global API key
 
         # Ensure the model is loaded when the service is initialized
         # Note: This might not be ideal for all scenarios (e.g., if LMStudio
@@ -152,14 +152,11 @@ class LMStudioLiteLLMWrapper(BaseLLM):
         try:
             # Directly call LiteLLM completion using the service's configuration
             # Global api_base and api_key should now be set by LMStudioService __init__
-            logger.info(f"Wrapper: Calling LiteLLM completion with api_base='{self._lmstudio_service.api_base}' and model='openai/{self._lmstudio_service.model_name}'") # Added log
             response = completion(
                 model=f"openai/{self._lmstudio_service.model_name}",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=kwargs.get("temperature", 0.7), # Pass temperature from kwargs or default
                 stop=stop, # Pass stop words
-                api_base=self._lmstudio_service.api_base, # Explicitly pass api_base
-                api_key=self._lmstudio_service.api_key, # Explicitly pass api_key
                 **kwargs # Pass any other relevant kwargs
             )
             logger.info("Wrapper: LiteLLM completion successful in wrapper.")
@@ -199,8 +196,6 @@ class LMStudioLiteLLMWrapper(BaseLLM):
                     messages=[{"role": "user", "content": prompt}],
                     temperature=kwargs.get("temperature", 0.7), # Pass temperature from kwargs or default
                     stop=stop, # Pass stop words
-                    api_base=self._lmstudio_service.api_base, # Explicitly pass api_base
-                    api_key=self._lmstudio_service.api_key, # Explicitly pass api_key
                     **kwargs # Pass any other relevant kwargs
                 )
                 logger.info(f"Wrapper: LiteLLM completion successful for prompt: {prompt[:50]}...")
@@ -226,4 +221,3 @@ class LMStudioLiteLLMWrapper(BaseLLM):
         # to be extracted from the underlying LiteLLM response if possible.
         # For simplicity, we'll create a basic LLMResult.
         return LLMResult(generations=generations)
-
