@@ -6,3 +6,5 @@ venv/
 *.log
 .DS_Store
 Thumbs.db
+.aider*
+.env
