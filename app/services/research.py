@@ -58,14 +58,18 @@ class ResearchService:
         
         return results
         
-    def aggregate_research(self, query: str) -> Dict[str, Any]:
-        """Aggregate research from multiple sources"""
+    def aggregate_research(self, query: str) -> str:
+        """Aggregate research from multiple sources and return a text summary"""
         web_results = self.search_web(query)
         arxiv_results = self.search_arxiv(query)
         scholar_results = self.search_semantic_scholar(query)
-        
-        return {
-            "web_results": web_results,
-            "arxiv_papers": arxiv_results,
-            "semantic_scholar_papers": scholar_results
-        }
+
+        # Extract relevant information from each source
+        web_summary = "\n".join([f"{result['title']}: {result['snippet']} ({result['url']})" for result in web_results])
+        arxiv_summary = "\n".join([f"{paper['title']} by {', '.join(paper['authors'])}: {paper['summary']} ({paper['url']})" for paper in arxiv_results])
+        scholar_summary = "\n".join([f"{paper['title']} by {', '.join(paper['authors'])}: {paper['abstract']} ({paper['url']})" for paper in scholar_results])
+
+        # Combine all summaries into a single text string
+        final_text = f"Web Search Results:\n{web_summary}\n\nArXiv Papers:\n{arxiv_summary}\n\nSemantic Scholar Papers:\n{scholar_summary}"
+
+        return final_text

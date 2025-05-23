@@ -1,17 +1,14 @@
-import os
-import yaml
 import logging
 import json
-from crewai import Agent
+from crewai import Agent # Import Agent
 from crewai.tools import BaseTool
-from crewai.project import CrewBase, agent, task, crew # Keep if needed for CrewBase context, but likely not in agent file
-from typing import Dict, Any, List, Union # Import Union for type hinting
-from pathlib import Path
-from pydantic import ValidationError, BaseModel, Field
-from app.services.lmstudio import LMStudioService, LMStudioLiteLLMWrapper
+from pydantic import BaseModel, Field
+from typing import Dict, Any, Union, Optional # Import Optional
+from app.services.lmstudio import LMStudioService # Assuming LMStudioService is correctly imported
 
-# Configure logger for this module
 logger = logging.getLogger(__name__)
+
+# --- Topic Analysis Tool ---
 
 # Define the Pydantic model for the actual input data fields for the tool
 class TopicAnalysisInputData(BaseModel):
@@ -41,36 +38,52 @@ class TopicAnalysisTool(BaseTool):
     lmstudio_service: LMStudioService
     llm: Any # Or a more specific type if available
 
-    # Update the _run method to accept Union[TopicAnalysisToolInput, Dict[str, Any]]
-    def _run(self, tool_input: Union[TopicAnalysisToolInput, Dict[str, Any]]) -> str:
+    # Update the _run method to accept Union[TopicAnalysisToolInput, Dict[str, Any], str]
+    def _run(self, tool_input: Union[TopicAnalysisToolInput, Dict[str, Any], str]) -> str:
         """
         Runs the topic analysis logic by prompting LMStudio.
         This method is called by the CrewAI agent when the tool is used.
-        Handles input as either a Pydantic model instance or a dictionary.
+        Handles input as either a Pydantic model instance, a dictionary, or a JSON string.
         """
         logger.info(f"Executing Topic Analysis Tool...")
 
         # --- Safely extract text_to_analyze from tool_input ---
         text_to_analyze = ""
+        parsed_input_data: Optional[Dict[str, Any]] = None
+
         try:
-            if isinstance(tool_input, TopicAnalysisToolInput):
-                # Input is the expected Pydantic model
-                text_to_analyze = tool_input.tool_input.text_to_analyze
-                logger.info("Tool input is Pydantic model.")
+            if isinstance(tool_input, str):
+                # If input is a string, attempt to parse it as JSON
+                logger.info("Tool received string input, attempting JSON parse.")
+                parsed_input_data = json.loads(tool_input)
             elif isinstance(tool_input, dict):
-                # Input is a raw dictionary - attempt to access nested keys
-                text_to_analyze = tool_input.get('tool_input', {}).get('text_to_analyze', '')
-                logger.info("Tool input is a dictionary.")
+                # If input is already a dictionary
+                logger.info("Tool received dictionary input.")
+                parsed_input_data = tool_input
+            elif isinstance(tool_input, TopicAnalysisToolInput):
+                # If input is the expected Pydantic model, convert to dict
+                logger.info("Tool received Pydantic model input.")
+                parsed_input_data = tool_input.model_dump() # Use model_dump for Pydantic v2
             else:
                 logger.error(f"Tool received unexpected input type: {type(tool_input)}")
                 return json.dumps({"status": "error", "message": f"Tool received unexpected input type: {type(tool_input)}"})
 
+            # Now, extract text_to_analyze from the parsed dictionary
+            if parsed_input_data and 'tool_input' in parsed_input_data and isinstance(parsed_input_data['tool_input'], dict):
+                text_to_analyze = parsed_input_data['tool_input'].get('text_to_analyze', '')
+            else:
+                logger.error(f"Could not find 'tool_input' or 'text_to_analyze' in parsed input: {parsed_input_data}")
+                return json.dumps({"status": "error", "message": "Invalid structure in tool input: missing 'tool_input' or 'text_to_analyze'."})
+
             if not text_to_analyze:
-                 logger.error("Tool received empty text_to_analyze.")
+                 logger.error("Tool received empty text_to_analyze after extraction.")
                  return json.dumps({"status": "error", "message": "Tool received empty text to analyze."})
 
-            logger.info(f"  Text to Analyze: {text_to_analyze[:100]}...")
+            logger.info(f"  Text to Analyze (extracted): {text_to_analyze[:100]}...")
 
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse tool input string as JSON: {e}")
+            return json.dumps({"status": "error", "message": f"Tool received invalid JSON string input: {e}"})
         except Exception as e:
             logger.error(f"Error extracting text_to_analyze from tool input: {e}")
             return json.dumps({"status": "error", "message": f"Error processing tool input: {e}"})
@@ -162,15 +175,3 @@ class TopicAnalysisAgent:
             llm=self.llm, # Pass the llm instance to the CrewAI Agent
             tools=[self.topic_analysis_tool] # Assign the instantiated tool to the agent
         )
-        # self.last_result: Optional[Any] = None # Add a placeholder for result if needed
-
-    # The process method is likely not needed if the task uses the tool directly.
-    # Keeping it as a placeholder or for direct calls outside CrewAI flow if necessary.
-    # Note: If you call this process method directly, you would need to construct
-    # a TopicAnalysisToolInput object with the nested structure.
-    # def process(self, inputs: TopicAnalysisToolInput) -> str:
-    #     """Process the input using the agent's tool."""
-    #     logger.warning("TopicAnalysisAgent.process called directly. CrewAI task uses the TopicAnalysisTool.")
-    #     # Example: Call the tool's _run method if needed for direct processing
-    #     tool_output_json_string = self.topic_analysis_tool._run(inputs) # Pass the inputs object
-    #     return tool_output_json_string

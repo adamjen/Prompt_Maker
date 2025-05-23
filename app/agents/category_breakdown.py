@@ -1,15 +1,12 @@
 import logging
-from crewai import Agent
-from crewai.tools import BaseTool # Import BaseTool
-# Assuming these models exist
-
-from app.models.prompt import PromptRequest # Assuming PromptRequest might be needed for type hinting
-from app.models.response import CategoryAnalysisResult # Assuming this model exists
-from app.services.lmstudio import LMStudioService # Import LMStudioService
-from typing import Dict, Any, Optional
-from datetime import datetime
-import json # Import json
-from pydantic import BaseModel, Field # Import BaseModel and Field for Pydantic schema
+import json
+from crewai import Agent # Import Agent
+from crewai.tools import BaseTool
+from pydantic import BaseModel, Field # Ensure this import is present and correct
+from typing import Dict, Any, Optional, Union # Import Optional and Union
+from app.services.lmstudio import LMStudioService # Assuming LMStudioService is correctly imported
+# Assuming CategoryAnalysisResult might be needed for type hinting if you re-introduce process method
+# from app.models.response import CategoryAnalysisResult 
 
 logger = logging.getLogger(__name__)
 
@@ -49,21 +46,59 @@ class CategoryBreakdownTool(BaseTool):
 
     # The _run method now receives the validated CategoryBreakdownToolInput instance
     # Access the actual data from the nested 'tool_input' attribute
-    def _run(self, tool_input: CategoryBreakdownToolInput) -> str:
+    def _run(self, tool_input: Union[CategoryBreakdownToolInput, Dict[str, Any], str]) -> str:
         """
         Runs the category breakdown logic by prompting LMStudio.
         This method is called by the CrewAI agent when the tool is used.
-        Receives input as a CategoryBreakdownToolInput instance with nested data.
+        Receives input as a CategoryBreakdownToolInput instance with nested data,
+        a dictionary, or a JSON string.
         """
         logger.info(f"Executing Category Breakdown Tool...")
-        # Access the actual input data from the nested 'tool_input' field
-        input_data = tool_input.tool_input
-        logger.info(f"  Prompt: {input_data.prompt[:100]}...")
-        logger.info(f"  Topic Analysis: {input_data.topic_analysis[:100]}...")
+        
+        # --- Safely extract prompt and topic_analysis from tool_input ---
+        prompt_content = ""
+        topic_analysis_result_str = ""
+        parsed_input_data: Optional[Dict[str, Any]] = None
 
-        # The input is now validated and available via the input_data object
-        prompt_content = input_data.prompt
-        topic_analysis_result_str = input_data.topic_analysis
+        try:
+            if isinstance(tool_input, str):
+                logger.info("Tool received string input, attempting JSON parse.")
+                parsed_input_data = json.loads(tool_input)
+            elif isinstance(tool_input, dict):
+                logger.info("Tool received dictionary input.")
+                parsed_input_data = tool_input
+            elif isinstance(tool_input, CategoryBreakdownToolInput):
+                logger.info("Tool received Pydantic model input.")
+                parsed_input_data = tool_input.model_dump()
+            else:
+                logger.error(f"Tool received unexpected input type: {type(tool_input)}")
+                return json.dumps({"status": "error", "message": f"Tool received unexpected input type: {type(tool_input)}"})
+
+            if parsed_input_data and 'tool_input' in parsed_input_data and isinstance(parsed_input_data['tool_input'], dict):
+                prompt_content = parsed_input_data['tool_input'].get('prompt', '')
+                topic_analysis_result_str = parsed_input_data['tool_input'].get('topic_analysis', '')
+            else:
+                logger.error(f"Could not find 'tool_input' or required keys ('prompt', 'topic_analysis') in parsed input: {parsed_input_data}")
+                return json.dumps({"status": "error", "message": "Invalid structure in tool input: missing 'tool_input' or required keys."})
+
+            if not prompt_content:
+                logger.error("Tool received empty prompt_content after extraction.")
+                return json.dumps({"status": "error", "message": "Tool received empty prompt content."})
+            if not topic_analysis_result_str:
+                logger.error("Tool received empty topic_analysis_result_str after extraction.")
+                return json.dumps({"status": "error", "message": "Tool received empty topic analysis result."})
+
+            logger.info(f"  Prompt (extracted): {prompt_content[:100]}...")
+            logger.info(f"  Topic Analysis (extracted): {topic_analysis_result_str[:100]}...")
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse tool input string as JSON: {e}")
+            return json.dumps({"status": "error", "message": f"Tool received invalid JSON string input: {e}"})
+        except Exception as e:
+            logger.error(f"Error extracting data from tool input: {e}")
+            return json.dumps({"status": "error", "message": f"Error processing tool input: {e}"})
+        # --- End of input extraction ---
+
 
         # Construct prompt for LMStudio
         breakdown_prompt = f"""
@@ -115,76 +150,28 @@ Ensure the output is valid JSON and contains only the JSON array.
 
 
 class CategoryBreakdownAgent:
-    """Agent responsible for breaking down a prompt into categories"""
+    """Agent responsible for breaking down prompts into categories."""
 
     def __init__(self, config: Dict[str, Any], lmstudio_service: LMStudioService, llm: Any):
         self.config = config
-        self.lmstudio_service = lmstudio_service # Store the service instance
-        self.llm = llm # Store llm
+        self.lmstudio_service = lmstudio_service
+        self.llm = llm
 
         # Instantiate the custom tool, passing necessary dependencies
         self.category_breakdown_tool = CategoryBreakdownTool(
             lmstudio_service=self.lmstudio_service,
-            llm=self.llm # Pass the llm to the tool if needed within _run
+            llm=self.llm
         )
 
-        # Initialize the CrewAI Agent here using the config
+        # Initialize the CrewAI Agent using the config
         self.agent = Agent(
             role=config.get("role", "Category Breakdown Specialist"),
-            goal=config.get("goal", "Break down the user prompt into distinct categories or sub-topics."),
-            backstory=config.get("backstory", "An expert in information architecture..."),
+            goal=config.get("goal", "Break down user prompts into distinct categories and sub-topics."),
+            backstory=config.get("backstory", "An expert in organizing complex information into logical categories."),
             verbose=config.get("verbose", False),
             allow_delegation=config.get("allow_delegation", False),
             max_iter=config.get("max_iter", 15),
             max_rpm=config.get("max_rpm", 100),
-            llm=self.llm, # Pass the llm instance to the CrewAI Agent
-            tools=[self.category_breakdown_tool] # Assign the instantiated tool to the agent
+            llm=self.llm,
+            tools=[self.category_breakdown_tool]
         )
-        self.last_result: Optional[CategoryAnalysisResult] = None
-
-    # The process method is likely not needed if the task uses the tool directly.
-    # Keeping it as a placeholder or for direct calls outside CrewAI flow if necessary.
-    # Note: If you call this process method directly, you would need to construct
-    # a CategoryBreakdownToolInput object with the nested structure.
-    def process(self, inputs: CategoryBreakdownToolInput) -> CategoryAnalysisResult:
-        """Process the input and break it down into categories (now handled by the tool)."""
-        logger.warning("CategoryBreakdownAgent.process called directly. CrewAI task uses the CategoryBreakdownTool.")
-        # Example: Call the tool's _run method if needed for direct processing
-        tool_output_json_string = self.category_breakdown_tool._run(inputs) # Pass the inputs object
-        try:
-            # Assuming the tool output is a JSON string representing the categories list
-            categories_list = json.loads(tool_output_json_string)
-            if isinstance(categories_list, list):
-                 result = CategoryAnalysisResult(
-                     status="success",
-                     processing_time=0.0, # Placeholder
-                     categories=categories_list,
-                     analysis_details="Processed via direct tool call."
-                 )
-                 self.last_result = result
-                 return result
-            else:
-                 logger.error(f"Tool output was not a list: {tool_output_json_string}")
-                 return CategoryAnalysisResult(
-                     status="error",
-                     processing_time=0.0,
-                     categories=[],
-                     analysis_details=f"Tool output was not a list: {tool_output_json_string}"
-                 )
-
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse tool output into CategoryAnalysisResult (JSON Error): {e}")
-            return CategoryAnalysisResult(
-                status="error",
-                processing_time=0.0,
-                categories=[],
-                analysis_details=f"Failed to parse tool output as JSON: {e}"
-            )
-        except Exception as e:
-            logger.error(f"An unexpected error occurred during direct process call: {e}")
-            return CategoryAnalysisResult(
-                status="error",
-                processing_time=0.0,
-                categories=[],
-                analysis_details=f"An unexpected error occurred: {e}"
-            )

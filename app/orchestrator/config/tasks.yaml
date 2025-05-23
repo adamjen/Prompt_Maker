@@ -58,6 +58,6 @@ research_integration_task:
     }}
     ```
     --
-    Your final answer MUST be the RAW string output provided directly by the 'Research Integration Tool'. Do NOT wrap it in JSON or add any other text.
+    Your final answer MUST be the value of the 'refined_prompt' key from the JSON output provided by the 'Research Integration Tool'. Do NOT include any other text or formatting in your final answer.
   expected_output: "The final, enhanced prompt incorporating research findings and all previous refinements."
   agent: "research_integration_agent"
