@@ -25,7 +25,7 @@ if not logger.handlers:
 
 # Enable LiteLLM's internal debugging using environment variable as suggested
 os.environ['LITELLM_LOG'] = 'DEBUG'
-litellm._turn_on_debug() # Still call this for some internal LiteLLM setup
+# Removed litellm._turn_on_debug() as it's not exported from the module
 
 
 def _clean_llm_output(text: str) -> str:
@@ -81,7 +81,7 @@ def _clean_llm_output(text: str) -> str:
 class LMStudioService:
     """Service for interacting with LMStudio local LLM using LiteLLM"""
 
-    def __init__(self, model_name: str = None, api_base: str = None):
+    def __init__(self, model_name: Optional[str] = None, api_base: Optional[str] = None):
         # Load API base from environment variable or use default
         self.api_base = api_base if api_base is not None else os.getenv("LMSTUDIO_API_BASE_URL", "http://localhost:1234")
         # Load model name from environment variable or use default
@@ -94,6 +94,14 @@ class LMStudioService:
         # Set the global LiteLLM API base to ensure requests go to LMStudio
         litellm.api_base = f"{self.api_base}/v1"
         litellm.api_key = self.api_key # Also set global API key
+
+        # Override the model cost map URL to use our local file instead of GitHub
+        model_cost_map_path = "/home/adam/LLM/Prompt_Maker/model_mapping.patch.json"
+        if os.path.exists(model_cost_map_path):
+            logger.info(f"Using local model cost map from {model_cost_map_path}")
+            litellm.model_cost_map_url = f"file://{model_cost_map_path}"
+        else:
+            logger.warning(f"Local model cost map file not found at {model_cost_map_path}. Will use GitHub URL.")
 
         # Ensure the model is loaded when the service is initialized
         self.ensure_model_loaded()
@@ -119,9 +127,10 @@ class LMStudioService:
                 models_data = response.json()
                 loaded_models = [model["id"] for model in models_data.get("data", [])]
 
+                self._model_loaded = False
                 if self.model_name in loaded_models:
                     logger.info(f"Model '{self.model_name}' is already loaded in LMStudio.")
-                    model_found_in_lmstudio = True
+                    self._model_loaded = True
                     break # Model found, exit retry loop
                 else:
                     logger.warning(f"Model '{self.model_name}' not found in LMStudio's currently loaded models. Attempting to load using 'lms' CLI (if not already tried).")
@@ -174,7 +183,7 @@ class LMStudioService:
                     f"the model ID in LMStudio exactly. Currently loaded models: {loaded_models}"
                 ) from None
 
-        if not model_found_in_lmstudio:
+        if not hasattr(self, '_model_loaded') or not self._model_loaded:
             # This block is reached if the 'break' statement was not hit,
             # meaning the model was never found or a critical error occurred that stopped retries.
             raise RuntimeError(
@@ -183,7 +192,7 @@ class LMStudioService:
             )
 
 
-    def generate_completion(self, prompt: str, temperature: float = 0.7) -> str:
+    def generate_completion(self, prompt: str, temperature: float = 0.7, **kwargs) -> str:
         """Generate text completion using LiteLLM configured for LMStudio"""
         logger.info(f"Service: Generating completion for prompt (first 50 chars): {prompt[:50]}...")
         max_llm_retries = 3
@@ -205,30 +214,78 @@ class LMStudioService:
 
                 content = ""
                 for chunk in response_stream:
+                    if chunk is None:
+                        logger.warning("Service: Received None as chunk in streaming response")
+                        continue
+
                     logger.debug(f"Service: Raw Streaming Chunk: {chunk}") # Log the raw chunk for inspection
 
-                    if isinstance(chunk, dict):
-                        choices = chunk.get('choices')
-                        if choices and isinstance(choices, list) and len(choices) > 0:
-                            choice = choices[0]
-                            logger.debug(f"Service: Extracted Choice: {choice}")
-                            if isinstance(choice, dict):
-                                delta = choice.get('delta')
-                                if delta and isinstance(delta, dict):
-                                    content_part = delta.get('content')
-                                    if content_part is not None:
-                                        content += content_part
-                                        logger.debug(f"Service: Appended Content Part. Current content length: {len(content)}")
+                    try:
+                        # First try to handle dict-based structure
+                        if isinstance(chunk, dict):
+                            choices = chunk.get('choices')
+                            if choices and isinstance(choices, list) and len(choices) > 0:
+                                choice = choices[0]
+                                logger.debug(f"Service: Extracted Choice: {choice}")
+                                if isinstance(choice, dict):
+                                    delta = choice.get('delta')
+                                    if delta and isinstance(delta, dict):
+                                        # Try to get content from various possible locations
+                                        content_part = delta.get('content') or getattr(delta, 'content', None)
+                                        if content_part:
+                                            content += content_part
+                                            logger.debug(f"Service: Appended Content Part. Current length: {len(content)}")
+
+                                        # Also check for reasoning_content which might contain text
+                                        reasoning_content = delta.get('reasoning_content') or getattr(delta, 'reasoning_content', None)
+                                        if reasoning_content:
+                                            content += reasoning_content
+                                            logger.debug(f"Service: Appended Reasoning Content. Current length: {len(content)}")
                                 else:
-                                    logger.debug("Service: 'content' key in 'delta' is None.")
+                                    logger.debug("Service: 'delta' is not a dictionary.")
                             else:
-                                logger.debug("Service: 'delta' is not a dictionary or is None.")
+                                logger.debug("Service: Choice is not a dictionary or is empty.")
                         else:
-                            logger.debug("Service: Choice is not a dictionary.")
-                    else:
-                        logger.debug("Service: 'choices' is not a list, is empty, or is None.")
-                else:
-                    logger.debug(f"Service: Chunk is not a dictionary: {type(chunk)}")
+                            # Handle non-dict chunks - this includes ModelResponseStream and other types
+                            logger.debug(f"Service: Non-dict chunk type: {type(chunk)}")
+
+                            # Special handling for ModelResponseStream objects
+                            if hasattr(chunk, 'choices') and isinstance(getattr(chunk, 'choices'), list) and len(getattr(chunk, 'choices')) > 0:
+                                choice = getattr(chunk, 'choices')[0]
+                                logger.debug(f"Service: Extracted choice from ModelResponseStream: {choice}")
+
+                                # Handle delta content in the choice
+                                if hasattr(choice, 'delta') and getattr(choice, 'delta') is not None:
+                                    delta = getattr(choice, 'delta')
+
+                                    # Try to get content from various possible locations
+                                    if hasattr(delta, 'content'):
+                                        content_part = getattr(delta, 'content')
+                                        if content_part:
+                                            content += str(content_part)
+                                            logger.debug(f"Service: Extracted content from ModelResponseStream delta. Current length: {len(content)}")
+
+                                    # Also check for reasoning_content which might contain text
+                                    if hasattr(delta, 'reasoning_content'):
+                                        reasoning_content = getattr(delta, 'reasoning_content')
+                                        if reasoning_content:
+                                            content += str(reasoning_content)
+                                            logger.debug(f"Service: Extracted reasoning_content from ModelResponseStream delta. Current length: {len(content)}")
+                            # Handle other non-dict objects with content attributes
+                            elif hasattr(chunk, 'content'):
+                                content_part = getattr(chunk, 'content', None)
+                                if content_part:
+                                    content += str(content_part)
+                                    logger.debug(f"Service: Extracted content attribute. Current length: {len(content)}")
+
+                            # Check for reasoning_content on the chunk itself
+                            if hasattr(chunk, 'reasoning_content'):
+                                reasoning_content = getattr(chunk, 'reasoning_content', None)
+                                if reasoning_content:
+                                    content += str(reasoning_content)
+                                    logger.debug(f"Service: Extracted reasoning_content. Current length: {len(content)}")
+                    except Exception as e:
+                        logger.debug(f"Service: Error processing chunk: {str(e)}")
 
                 if content: # If content is successfully extracted, break from retry loop
                     cleaned_content = _clean_llm_output(content)
@@ -318,10 +375,18 @@ class LMStudioLiteLLMWrapper(BaseLLM):
                                 delta = choice.get('delta')
                                 if delta and isinstance(delta, dict):
                                     content_part = delta.get('content')
+                                    reasoning_content_part = delta.get('reasoning_content')
+                                    
+                                    extracted_text = ""
                                     if content_part is not None:
-                                        yield GenerationChunk(text=content_part)
+                                        extracted_text += str(content_part)
+                                    if reasoning_content_part is not None:
+                                        extracted_text += str(reasoning_content_part)
+
+                                    if extracted_text:
+                                        yield GenerationChunk(text=extracted_text)
                                     else:
-                                        logger.debug("Wrapper: 'content' key in 'delta' is None (Stream).")
+                                        logger.debug(f"Wrapper: No content or reasoning_content in delta. Delta: {delta} (Stream).")
                                 else:
                                     logger.debug("Wrapper: 'delta' is not a dictionary or is None (Stream).")
                             else:
@@ -329,7 +394,49 @@ class LMStudioLiteLLMWrapper(BaseLLM):
                         else:
                             logger.debug("Wrapper: 'choices' is not a list, is empty, or is None (Stream).")
                     else:
-                        logger.debug(f"Wrapper: Chunk is not a dictionary (Stream): {type(chunk)}")
+                        logger.debug(f"Wrapper: Non-dict chunk type (Stream): {type(chunk)}")
+
+                        extracted_text = ""
+                        # Special handling for ModelResponseStream objects
+                        if hasattr(chunk, 'choices') and isinstance(getattr(chunk, 'choices'), list) and len(getattr(chunk, 'choices')) > 0:
+                            choice = getattr(chunk, 'choices')[0]
+                            logger.debug(f"Wrapper: Extracted choice from ModelResponseStream (Stream): {choice}")
+
+                            # Handle delta content in the choice
+                            if hasattr(choice, 'delta') and getattr(choice, 'delta') is not None:
+                                delta = getattr(choice, 'delta')
+
+                                # Try to get content from various possible locations
+                                if hasattr(delta, 'content'):
+                                    content_part = getattr(delta, 'content')
+                                    if content_part:
+                                        extracted_text += str(content_part)
+                                        logger.debug(f"Wrapper: Extracted content from ModelResponseStream delta (Stream).")
+
+                                # Also check for reasoning_content which might contain text
+                                if hasattr(delta, 'reasoning_content'):
+                                    reasoning_content = getattr(delta, 'reasoning_content')
+                                    if reasoning_content:
+                                        extracted_text += str(reasoning_content)
+                                        logger.debug(f"Wrapper: Extracted reasoning_content from ModelResponseStream delta (Stream).")
+                        # Handle other non-dict objects with content attributes
+                        elif hasattr(chunk, 'content'):
+                            content_part = getattr(chunk, 'content', None)
+                            if content_part:
+                                extracted_text += str(content_part)
+                                logger.debug(f"Wrapper: Extracted content attribute (Stream).")
+
+                        # Check for reasoning_content on the chunk itself
+                        if hasattr(chunk, 'reasoning_content'):
+                            reasoning_content = getattr(chunk, 'reasoning_content', None)
+                            if reasoning_content:
+                                extracted_text += str(reasoning_content)
+                                logger.debug(f"Wrapper: Extracted reasoning_content (Stream).")
+                        
+                        if extracted_text:
+                            yield GenerationChunk(text=extracted_text)
+                        else:
+                            logger.debug(f"Wrapper: No content extracted from non-dict chunk: {chunk} (Stream).")
                 return # Successfully streamed, exit retry loop
 
             except Exception as e:

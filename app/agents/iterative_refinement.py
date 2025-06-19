@@ -120,22 +120,4 @@ class IterativeRefinementAgent:
         )
         self.last_result: Optional[IterativeRefinementResult] = None
 
-    # The process method is likely not needed if the task uses the tool directly.
-    # Keeping it as a placeholder or for direct calls outside CrewAI flow if necessary.
-    def process(self, tool_input: str) -> IterativeRefinementResult:
-        """Process the input prompt and refine it (now handled by the tool)."""
-        logger.warning("IterativeRefinementAgent.process called directly. CrewAI task uses the IterativeRefinementTool.")
-        # Example: Call the tool's _run method if needed for direct processing
-        # The tool expects a string input like "Prompt: ...\nTopic Analysis: ...\nCategory Breakdown: ..."
-        refined_prompt_string = self.iterative_refinement_tool._run(tool_input)
-        # Assuming the tool returns the refined prompt string directly
-        result = IterativeRefinementResult(
-            status="success" if not refined_prompt_string.startswith("Error during refinement:") else "error",
-            processing_time=0.0, # Placeholder
-            refined_prompt=refined_prompt_string if not refined_prompt_string.startswith("Error during refinement:") else "Error: " + refined_prompt_string,
-            refinement_details="Processed via direct tool call." if not refined_prompt_string.startswith("Error during refinement:") else refined_prompt_string,
-            timestamp=datetime.now()
-        )
-        self.last_result = result
-        return result
 

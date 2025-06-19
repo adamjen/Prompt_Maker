@@ -1,0 +1,11 @@
+{
+    "openai/unsloth-qwen3-8b": {
+        "max_tokens": 4096,
+        "max_input_tokens": 4096,
+        "max_output_tokens": 4096,
+        "input_cost_per_token": 0.0015,
+        "output_cost_per_token": 0.0015,
+        "litellm_provider": "openai",
+        "mode": "completion"
+    }
+}
