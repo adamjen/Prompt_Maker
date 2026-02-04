@@ -1,6 +1,6 @@
 #!/bin/bash
 # Activate the virtual environment
-source venv/bin/activate
+source .venv/bin/activate
 
 # Install dependencies using uv if not already installed
 if ! command -v uv &> /dev/null; then
