@@ -7,3 +7,5 @@
 [2025-05-03 19:48:50] - Significant architectural decision made: High-level design document has been updated based on `Epics.md`, `Inital_Concept.md`, and `Product_Requirements.md`.
 [2025-05-03 09:39:15] - User requested an update to the Memory Bank (UMB).
 [2025-05-04 12:33:14] - Added FastAPI application setup and endpoint definitions to `docs/Epic_1_Ticket_2.md`.
+[2026-02-04 19:25:00] - Updated crewAI and crewai-tools dependencies from 0.118.0 to 1.9.3
+[2026-02-04 19:25:00] - Enhanced startup.sh script to use uv for dependency management with .venv path correction

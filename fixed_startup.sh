@@ -1,3 +1,15 @@
+#!/bin/bash
+
+# Fixed startup script - resolve dependency conflicts
+echo "Starting Prompt Maker..."
+
+# Install uv globally
+echo "Installing uv globally..."
+pip install uv
+
+# Create a temporary requirements file without conflicting versions
+echo "Creating temporary requirements file..."
+cat > temp_requirements.txt << EOF
 aiohappyeyeballs==2.6.1
 aiohttp==3.11.18
 aiosignal==1.3.2
@@ -6,28 +18,28 @@ annotated-types==0.7.0
 anyio==4.9.0
 appdirs==1.4.4
 asgiref==3.8.1
-asttokens==2.4.1
-attrs==23.2.0
+asttokens==3.0.0
+attrs==25.3.0
 auth0-python==4.9.0
 backoff==2.2.1
 bcrypt==4.3.0
-beautifulsoup4==4.12.3
-blinker==1.7.0
+beautifulsoup4==4.13.4
+blinker==1.9.0
 build==1.2.2.post1
 cachetools==5.5.2
-certifi==2023.11.17
+certifi==2025.4.26
 cffi==1.17.1
 charset-normalizer==3.4.2
 chroma-hnswlib==0.7.6
-chromadb~=1.1.0
-click==8.1.6
+chromadb==1.1.1
+click==8.1.8
 cohere==5.15.0
 coloredlogs==15.0.1
 crewai==1.9.3
 crewai-tools==1.9.3
-cryptography==41.0.7
+cryptography==44.0.3
 dataclasses-json==0.6.7
-decorator==5.1.1
+decorator==5.2.1
 Deprecated==1.2.18
 deprecation==2.1.0
 distro==1.9.0
@@ -36,7 +48,7 @@ docstring_parser==0.16
 durationpy==0.9
 embedchain==0.1.128
 et_xmlfile==2.0.0
-executing==2.0.1
+executing==2.2.0
 fastapi==0.115.9
 fastavro==1.10.0
 filelock==3.18.0
@@ -60,24 +72,24 @@ httpx-ws==0.7.2
 huggingface-hub==0.30.2
 humanfriendly==10.0
 hyperframe==6.1.0
-idna==3.6
+idna==3.10
 importlib_metadata==8.6.1
 importlib_resources==6.5.2
 iniconfig==2.1.0
 instructor==1.7.9
-ipython==8.20.0
+ipython==9.2.0
 ipython_pygments_lexers==1.1.1
 itsdangerous==2.2.0
-jedi==0.19.1
-Jinja2==3.1.2
+jedi==0.19.2
+Jinja2==3.1.6
 jiter==0.8.2
 json5~=0.10.0
 json-repair~=0.25.2
 jsonpatch==1.33
 jsonpickle==4.0.5
-jsonpointer==2.0
+jsonpointer==3.0.0
 jsonref==1.1.0
-jsonschema==4.10.3
+jsonschema==4.23.0
 jsonschema-specifications==2025.4.1
 kubernetes==32.0.1
 lancedb==0.22.0
@@ -93,23 +105,23 @@ litellm==1.67.1
 lmstudio==1.3.0
 Mako==1.3.10
 markdown-it-py==3.0.0
-MarkupSafe==2.1.5
+MarkupSafe==3.0.2
 marshmallow==3.26.1
-matplotlib-inline==0.1.6
+matplotlib-inline==0.1.7
 mdurl==0.1.2
 mem0ai==0.1.96
 mmh3==5.1.0
 monotonic==1.6
-mpmath==0.0.0
+mpmath==1.3.0
 msgspec==0.19.0
 multidict==6.4.3
 mypy_extensions==1.1.0
 networkx==3.4.2
 nodeenv==1.9.1
-numpy==1.26.4
+numpy==2.2.5
 oauthlib==3.2.2
 onnxruntime==1.21.1
-openai==1.77.0
+openai==1.83.0
 openpyxl==3.1.5
 opentelemetry-api==1.32.1
 opentelemetry-exporter-otlp-proto-common==1.32.1
@@ -126,11 +138,11 @@ orjson==3.10.18
 overrides==7.7.0
 packaging==24.2
 pandas==2.2.3
-parso==0.8.3
+parso==0.8.4
 pdfminer.six==20250327
 pdfplumber==0.11.6
 pexpect==4.9.0
-pillow==10.2.0
+pillow==11.2.1
 pluggy==1.5.0
 portalocker==2.10.1
 posthog==3.25.0
@@ -146,8 +158,8 @@ pycparser==2.22
 pydantic==2.11.4
 pydantic-settings==2.9.1
 pydantic_core==2.33.2
-Pygments==2.17.2
-PyJWT==2.7.0
+Pygments==2.19.1
+PyJWT==2.10.1
 pypdf==5.4.0
 pypdfium2==4.30.1
 PyPika==0.48.9
@@ -155,55 +167,72 @@ pyproject_hooks==1.2.0
 pyright==1.1.400
 pysbd==0.3.4
 pytest==8.3.5
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
 pytube==15.0.0
-pytz==2024.1
+pytz==2024.2
 pyvis==0.3.2
-PyYAML==6.0.1
+PyYAML==6.0.2
 qdrant-client==1.14.2
 referencing==0.36.2
 regex==2024.11.6
-requests==2.31.0
+requests==2.32.3
 requests-oauthlib==2.0.0
 requests-toolbelt==1.0.0
-rich==13.7.1
+rich==13.9.4
 rpds-py==0.24.0
 rsa==4.9.1
 schema==0.7.7
 shellingham==1.5.4
-six==1.16.0
+six==1.17.0
 sniffio==1.3.1
-soupsieve==2.5
+soupsieve==2.7
 SQLAlchemy==2.0.40
 stack-data==0.6.3
 starlette==0.45.3
-sympy==1.12
+sympy==1.14.0
 tabulate==0.9.0
 tenacity==9.1.2
 tiktoken==0.9.0
 tokenizers==0.20.3
 tomli==2.2.1
-tomli_w==1.0.0
-tqdm==0.0.0
-traitlets==5.5.0
+tomli_w==1.2.0
+tqdm==4.67.1
+traitlets==5.14.3
 typer==0.15.3
-types-requests==2.31
+types-requests==2.32.0.20250328
 typing-inspect==0.9.0
 typing-inspection==0.4.0
-typing_extensions==4.10.0
-tzdata==2025.3
-urllib3==2.0.7
+typing_extensions==4.13.2
+tzdata==2025.2
+urllib3==2.4.0
 uv==0.7.2
 uvicorn==0.34.2
 uvloop==0.21.0
 watchfiles==1.0.5
-wcwidth==0.2.5
+wcwidth==0.2.13
 websocket-client==1.8.0
-websockets==10.4
+websockets==15.0.1
 Werkzeug==3.1.3
 wrapt==1.17.2
 wsproto==1.2.0
 yarl==1.20.0
 zipp==3.21.0
 zstandard==0.23.0
+EOF
+
+# Install dependencies with pip (skip the conflicting chromadb version)
+echo "Installing dependencies..."
+pip install --upgrade pip
+pip install -r temp_requirements.txt
+
+# Clean up temporary file
+rm temp_requirements.txt
+
+# Install uvicorn separately if not found
+echo "Installing uvicorn..."
+pip install uvicorn
+
+# Run the application
+echo "Starting application..."
+uvicorn app.main:app --reload

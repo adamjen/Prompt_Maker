@@ -4,7 +4,7 @@ import logging
 import json
 from crewai import Agent, Task, Crew, Process
 from crewai.project import CrewBase, agent, task, crew
-from crewai.flow import Flow, start, listen # Import Flow, start, and listen
+from crewai.flow import Flow, start, listen  # Import Flow, start, and listen
 from typing import Dict, Any, List
 from pathlib import Path
 from pydantic import ValidationError
@@ -14,7 +14,11 @@ from app.services.lmstudio import LMStudioService, LMStudioLiteLLMWrapper
 from app.agents.topic_analysis import TopicAnalysisAgent
 from app.agents.category_breakdown import CategoryBreakdownAgent
 from app.agents.iterative_refinement import IterativeRefinementAgent
-from app.agents.research_integration import ResearchIntegrationAgent, ResearchIntegrationInputData, ResearchIntegrationToolInput
+from app.agents.research_integration import (
+    ResearchIntegrationAgent,
+    ResearchIntegrationInputData,
+    ResearchIntegrationToolInput,
+)
 
 from app.models.prompt import PromptRequest
 
@@ -22,6 +26,7 @@ CONFIG_DIR = Path(__file__).parent / "config"
 print(f"CONFIG_DIR: {CONFIG_DIR}")
 
 logger = logging.getLogger(__name__)
+
 
 # Define the Flow class
 @CrewBase
@@ -35,11 +40,27 @@ class PromptEnhancerCrew:
         self.litellm_llm = LMStudioLiteLLMWrapper(self.lmstudio_service)
 
         # Initialize custom agent wrappers
-        agents_config = self._load_config("agents")
-        self.topic_analysis_wrapper = TopicAnalysisAgent(agents_config.get("topic_analysis", {}), self.lmstudio_service, self.litellm_llm)
-        self.category_breakdown_wrapper = CategoryBreakdownAgent(agents_config.get("category_breakdown", {}), self.lmstudio_service, self.litellm_llm)
-        self.iterative_refinement_wrapper = IterativeRefinementAgent(agents_config.get("iterative_refinement", {}), self.lmstudio_service, self.litellm_llm)
-        self.research_integration_wrapper = ResearchIntegrationAgent(agents_config.get("research_integration", {}), self.lmstudio_service, self.litellm_llm)
+        agents_config = self._load_config("config/agents.yaml", "agent")
+        self.topic_analysis_wrapper = TopicAnalysisAgent(
+            agents_config.get("topic_analysis", {}),
+            self.lmstudio_service,
+            self.litellm_llm,
+        )
+        self.category_breakdown_wrapper = CategoryBreakdownAgent(
+            agents_config.get("category_breakdown", {}),
+            self.lmstudio_service,
+            self.litellm_llm,
+        )
+        self.iterative_refinement_wrapper = IterativeRefinementAgent(
+            agents_config.get("iterative_refinement", {}),
+            self.lmstudio_service,
+            self.litellm_llm,
+        )
+        self.research_integration_wrapper = ResearchIntegrationAgent(
+            agents_config.get("research_integration", {}),
+            self.lmstudio_service,
+            self.litellm_llm,
+        )
 
     def _load_config(self, config_name: str) -> Dict[str, Any]:
         """Helper to load a specific configuration file"""
@@ -80,8 +101,13 @@ class PromptEnhancerCrew:
         tasks_config = self._load_config("tasks")
         task_config = tasks_config.get("topic_analysis_task", {})
         return Task(
-            description=task_config.get("description", "Default topic analysis description."),
-            expected_output=task_config.get("expected_output", "A JSON object containing core topics, domain, complexity, and key entities."),
+            description=task_config.get(
+                "description", "Default topic analysis description."
+            ),
+            expected_output=task_config.get(
+                "expected_output",
+                "A JSON object containing core topics, domain, complexity, and key entities.",
+            ),
             agent=self.topic_analysis_agent(),
             tools=[self.topic_analysis_wrapper.topic_analysis_tool],
         )
@@ -92,8 +118,13 @@ class PromptEnhancerCrew:
         tasks_config = self._load_config("tasks")
         task_config = tasks_config.get("category_breakdown_task", {})
         return Task(
-            description=task_config.get("description", "Default category breakdown description."),
-            expected_output=task_config.get("expected_output", "A list of strings, where each string is a identified category or sub-topic."),
+            description=task_config.get(
+                "description", "Default category breakdown description."
+            ),
+            expected_output=task_config.get(
+                "expected_output",
+                "A list of strings, where each string is a identified category or sub-topic.",
+            ),
             agent=self.category_breakdown_agent(),
             # tools=[self.category_breakdown_wrapper.category_breakdown_tool], # Add tool if exists
         )
@@ -104,8 +135,13 @@ class PromptEnhancerCrew:
         tasks_config = self._load_config("tasks")
         task_config = tasks_config.get("iterative_refinement_task", {})
         return Task(
-            description=task_config.get("description", "Default iterative refinement description."),
-            expected_output=task_config.get("expected_output", "A significantly improved and more detailed version of the original prompt."),
+            description=task_config.get(
+                "description", "Default iterative refinement description."
+            ),
+            expected_output=task_config.get(
+                "expected_output",
+                "A significantly improved and more detailed version of the original prompt.",
+            ),
             agent=self.iterative_refinement_agent(),
             # tools=[self.iterative_refinement_wrapper.iterative_refinement_tool], # Add tool if exists
         )
@@ -116,10 +152,17 @@ class PromptEnhancerCrew:
         tasks_config = self._load_config("tasks")
         task_config = tasks_config.get("research_integration_task", {})
         return Task(
-            description=task_config.get("description", "Default research integration description."),
-            expected_output=task_config.get("expected_output", "The refined prompt with relevant research findings integrated."),
+            description=task_config.get(
+                "description", "Default research integration description."
+            ),
+            expected_output=task_config.get(
+                "expected_output",
+                "The refined prompt with relevant research findings integrated.",
+            ),
             agent=self.research_integration_agent(),
-            tools=[self.research_integration_wrapper.research_integration_tool], # Add tool if exists
+            tools=[
+                self.research_integration_wrapper.research_integration_tool
+            ],  # Add tool if exists
         )
 
     @crew

@@ -8,6 +8,7 @@
 [2025-05-03 21:44:49] - Updated active context for steps 1 and 2 in the Implementation Plan.
 [2025-05-03 21:46:23] - Updated active context for Step 2 completion.
 [2025-05-04 11:32:55] Created requirements.txt with packages:
+
 - crewai
 - fastapi
 - uvicorn
@@ -20,11 +21,13 @@ $ pip install -r requirements.txt
 [2025-05-04 12:35:52] - Added FastAPI application setup and endpoint definitions to `docs/Epic_1_Ticket_2.md`.
 [2025-05-04 18:06] Created directory structure for AI-Driven Prompt Enhancer System as per `docs/1_Implementation_Paln.md`.
 [2025-05-04 18:15:16] - Created and populated the following files:
+
 - app/models/base.py
 - app/models/prompt.py
 - app/services/lmstudio.py
 
 Each file has been populated with the provided content.
+
 ## Task Progress Update
 
 ### Date: 5/4/2025, 6:19:38 PM (Australia/Sydney, UTC+10:00)
@@ -39,15 +42,19 @@ Each file has been populated with the provided content.
   - `app/orchestrator/crew.py`
 
 ### Notes:
+
 - The files were created with the necessary code and configurations for implementing LMStudio integration, specialized agents, and CrewAI orchestration.
 
 ## Additional Files Created
+
 - `app/main.py`
 - `app/static/index.html`
 - `app/services/research.py`
 - `app/run.py`
 - `tests/test_agents.py`
-[2025-05-04 18:46:28] Updated Memory Bank files based on test results for 'app/models/base.py' and 'tests/test_models.py'.
-[2025-06-19 20:00:11] - Debugged and resolved "No content extracted from LLM" error in `app/services/lmstudio.py` by enhancing content extraction logic in `_stream` method. Tests in `tests/test_llm_wrapper.py` now pass without errors.
-[2025-06-19 20:00:59] - Removed redundant `process` method from `app/agents/iterative_refinement.py` to streamline code.
-[2025-06-19 20:01:58] - Removed duplicate entries from `model_mapping.patch.json`.
+  [2025-05-04 18:46:28] Updated Memory Bank files based on test results for 'app/models/base.py' and 'tests/test_models.py'.
+  [2025-06-19 20:00:11] - Debugged and resolved "No content extracted from LLM" error in `app/services/lmstudio.py` by enhancing content extraction logic in `_stream` method. Tests in `tests/test_llm_wrapper.py` now pass without errors.
+  [2025-06-19 20:00:59] - Removed redundant `process` method from `app/agents/iterative_refinement.py` to streamline code.
+  [2025-06-19 20:01:58] - Removed duplicate entries from `model_mapping.patch.json`.
+  [2026-02-04 19:25:00] - Updated crewAI and crewai-tools to latest versions (1.9.3) in requirements.txt
+  [2026-02-04 19:25:00] - Enhanced startup.sh script to use uv for dependency management with .venv path correction
